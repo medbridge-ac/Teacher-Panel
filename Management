@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MED Bridge - Teacher Admin Panel</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            background: #f4f6f9; 
+            padding: 12px; 
+            color: #1f2937; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: #ffffff; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            overflow: hidden; 
+            border: 1px solid #e5e7eb; 
+        }
+        
+        .header { 
+            background: linear-gradient(135deg, #044E8A, #007bff); 
+            color: #ffffff; 
+            padding: 16px 20px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+        }
+        .back-btn { 
+            background: rgba(255, 255, 255, 0.2); 
+            color: #ffffff; 
+            border: 1px solid rgba(255, 255, 255, 0.3); 
+            padding: 6px 14px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 13px; 
+            font-weight: 500;
+            display: none; 
+            transition: 0.2s;
+        }
+        .back-btn:hover { background: rgba(255, 255, 255, 0.3); }
+
+        .content-body { padding: 16px; min-height: 450px; }
+
+        .admin-tabs { 
+            display: flex; 
+            gap: 8px; 
+            margin-bottom: 16px; 
+            border-bottom: 1px solid #e5e7eb; 
+            padding-bottom: 10px; 
+        }
+        .admin-tab { 
+            flex: 1;
+            padding: 10px 16px; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 8px; 
+            background: #f9fafb; 
+            font-weight: 600; 
+            cursor: pointer; 
+            font-size: 13px; 
+            color: #4b5563; 
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .admin-tab.active { 
+            background: #007bff; 
+            color: #ffffff; 
+            border-color: #007bff; 
+            box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .chat-item { 
+            background: #ffffff; 
+            padding: 12px 14px; 
+            border-radius: 8px; 
+            margin-bottom: 10px; 
+            border: 1px solid #e5e7eb; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            position: relative; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .chat-item:hover { background: #f0f7ff; border-color: #bfdbfe; }
+        .chat-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb; flex-shrink: 0; }
+        .chat-info { flex: 1; overflow: hidden; }
+        .chat-info h4 { margin: 0 0 4px 0; color: #007bff; font-size: 14px; font-weight: 600; }
+        .chat-info p { margin: 0; font-size: 13px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+        .badge { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; }
+        .badge.pending { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
+        .badge.resolved { background: #d1fae5; color: #059669; border: 1px solid #a7f3d0; }
+        .delete-btn { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 500; }
+
+        .detail-view { display: none; }
+        .message-card { background: #f9fafb; padding: 14px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e5e7eb; text-align: left; font-size: 13px; }
+        .message-card.teacher { background: #ecfdf5; border-color: #a7f3d0; }
+        .message-card img { max-width: 100%; max-height: 350px; object-fit: contain; display: block; margin-top: 10px; border-radius: 6px; border: 1px solid #e5e7eb; background: #000; }
+
+        .reply-box { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
+        textarea { width: 100%; height: 85px; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; resize: none; box-sizing: border-box; font-size: 13px; outline: none; background: #fcfcfc; }
+        textarea:focus { border-color: #007bff; background: #ffffff; box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
+        .footer-actions { display: flex; justify-content: space-between; align-items: center; }
+        button.action-btn { padding: 8px 18px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; box-shadow: 0 2px 6px rgba(16,185,129,0.2); }
+
+        .batch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .batch-card { background: #eff6ff; border: 1px solid #bfdbfe; padding: 14px; border-radius: 8px; text-align: center; cursor: pointer; font-weight: 600; color: #1d4ed8; font-size: 13px; transition: 0.2s; }
+        .batch-card:hover { background: #dbeafe; transform: translateY(-1px); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <span id="headerTitle">Teacher Admin Panel</span>
+            <div>
+                <button class="back-btn" id="backBtn" onclick="goBackToList()" style="margin-right: 10px;">← Back</button>
+                <button onclick="openNoticeModal()" style="background: rgba(255,255,255,0.9); color: #044E8A; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer;">
+                    📢 Notice
+                </button>
+            </div>
+        </div>
+
+        <!-- Notice Modal -->
+        <div id="noticeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99; justify-content:center; align-items:center; backdrop-filter: blur(2px);">
+            <div style="background:#fff; padding:20px; border-radius:12px; width:90%; max-width:400px; box-shadow:0 10px 25px rgba(0,0,0,0.15);">
+                <h3 style="margin-top:0; font-size:16px; color:#1f2937; margin-bottom:12px; font-weight:600;">📢 Update Notice</h3>
+                <textarea id="adminNoticeInput" placeholder="Write new notice here..." style="height:90px; margin-bottom:12px;"></textarea>
+                <div style="text-align:right;">
+                    <button onclick="closeNoticeModal()" style="background:#e5e7eb; color:#374151; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; margin-right:6px; font-size:12px; font-weight:500;">Cancel</button>
+                    <button onclick="postNewNotice()" style="background:#10b981; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600;">Publish</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-body">
+            <div id="adminTabsContainer" class="admin-tabs">
+                <button class="admin-tab active" onclick="switchAdminTab('qa', this)">Q&A Requests</button>
+                <button class="admin-tab" onclick="switchAdminTab('messenger', this)">Batch Messenger</button>
+            </div>
+
+            <!-- Q&A Section -->
+            <div id="tab-qa" class="tab-content active">
+                <div id="listView">
+                    <div id="listContainer">Loading Q&A...</div>
+                </div>
+
+                <div id="detailView" class="detail-view">
+                    <div id="detailContent"></div>
+                    <div class="reply-box">
+                        <textarea id="teacherAnswer" placeholder="Write your answer here..."></textarea>
+                        <div class="footer-actions">
+                            <div>
+                                <input type="file" id="teacherImage" accept="image/*" style="display:none;" onchange="previewImage(this)">
+                                <button type="button" onclick="document.getElementById('teacherImage').click()" style="background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 7px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">🖼️ Upload Image</button>
+                                <span id="imgName" style="font-size: 11px; margin-left: 8px; color: #6b7280;"></span>
+                            </div>
+                            <button class="action-btn" onclick="sendAnswer()">Send Answer</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messenger Chat Section -->
+            <div id="tab-messenger" class="tab-content">
+                <div id="batchSelectionView">
+                    <h3 style="color: #374151; margin-top:0; font-size: 14px; margin-bottom: 12px; font-weight: 600;">Student Batches (Chat Rooms)</h3>
+                    <div id="dynamicBatchGrid" class="batch-grid">
+                        <p style="color:#6b7280; font-size: 13px;">Loading batches...</p>
+                    </div>
+                </div>
+
+                <!-- Specific Batch Chat Room (Fixed Input Container Layout) -->
+                <div id="batchChatRoomView" style="display: none; height: 460px; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0;">
+                        <button onclick="backToBatchList()" style="background: #e5e7eb; color: #374151; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">← Back to Batches</button>
+                        <h3 id="currentBatchTitle" style="color: #007bff; margin:0; font-size: 15px; font-weight: 600;">Batch Chat</h3>
+                        <button onclick="loadBatchMessagesAdmin()" style="background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">🔄 Refresh</button>
+                    </div>
+
+                    <!-- Scrollable Message Area -->
+                    <div id="adminChatMessages" style="flex: 1; overflow-y: auto; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; text-align: left; margin-bottom: 10px; font-size: 13px;">
+                        Loading...
+                    </div>
+
+                    <!-- Fixed Teacher Chat Input Area -->
+                    <div style="display: flex; flex-direction: column; gap: 8px; background: #ffffff; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; flex-shrink: 0; box-shadow: 0 -2px 6px rgba(0,0,0,0.02);">
+                        <input type="text" id="teacherChatInput" placeholder="Type a message to this batch..." style="padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; outline: none; font-size: 13px;" onkeypress="handleTeacherChatKey(event)">
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <input type="file" id="teacherChatImage" accept="image/*" style="display:none;" onchange="handleTeacherChatImageSelect(this)">
+                                <button type="button" onclick="document.getElementById('teacherChatImage').click()" style="background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">🖼️ Image</button>
+                                <span id="teacherChatImgName" style="font-size: 11px; margin-left: 6px; color: #6b7280;">No image</span>
+                            </div>
+                            <button onclick="sendTeacherChatMessage()" style="padding: 7px 18px; background: #10b981; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJVKotJMOZ3fTtLlBPQUNLKs16b79ceM_aBHBFrShAh3E1dPowF2LmSq0v1BGedKhqpQ/exec";
+        const CHAT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo4FGLtWA2qB367z0_u77-dPjLhWbdpwYTvzFgFJkOdrt0fIl08onaKXIho7i1Y6n9FA/exec";
+
+        let allQuestions = [];
+        let selectedRowIndex = null;
+        let teacherFile = null;
+        let activeChatBatch = "";
+        let selectedChatImage = null;
+
+        window.onload = function() {
+            loadAdminChats();
+        };
+
+        function switchAdminTab(tabName, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+            btn.classList.add('active');
+
+            if (tabName === 'messenger') {
+                fetchBatchesAndRender();
+            }
+        }
+
+        function loadAdminChats() {
+            fetch(`${SCRIPT_URL}?action=getAllQA`)
+            .then(res => res.json())
+            .then(data => {
+                allQuestions = data;
+                let html = "";
+                if(!data || data.length === 0) {
+                    document.getElementById('listContainer').innerHTML = "<p style='text-align:center; color:#6b7280; font-size:13px;'>No Question Found</p>";
+                    return;
+                }
+
+                data.slice().reverse().forEach((item) => {
+                    const statusClass = item.status === 'Resolved' ? 'resolved' : 'pending';
+                    let thumbHTML = item.imageUrl ? `<img src="${item.imageUrl}" class="chat-thumb" alt="Img">` : '';
+
+                    html += `
+                        <div class="chat-item" onclick="openDetail(${item.rowIndex})">
+                            ${thumbHTML}
+                            <div class="chat-info">
+                                <h4>${item.name}</h4>
+                                <p><b>[${item.subject}]</b> ${item.question}</p>
+                            </div>
+                            <div class="badges">
+                                <span class="badge ${statusClass}">${item.status || 'Pending'}</span>
+                                <button class="delete-btn" onclick="deleteChat(event, ${item.rowIndex})">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('listContainer').innerHTML = html;
+            });
+        }
+
+        function fetchBatchesAndRender() {
+            fetch(`${CHAT_SCRIPT_URL}?action=getMessages&batch=all`)
+            .then(res => res.json())
+            .then(data => {
+                let batchesSet = new Set();
+                if (Array.isArray(data)) {
+                    data.forEach(msg => {
+                        if (msg.batch && msg.batch.trim() !== "") {
+                            batchesSet.add(msg.batch.trim());
+                        }
+                    });
+                }
+
+                let gridHtml = "";
+                if (batchesSet.size === 0) {
+                    gridHtml = "<p style='color:#6b7280; grid-column: span 2; text-align: center; font-size:13px;'>No batch messages found yet.</p>";
+                } else {
+                    batchesSet.forEach(batch => {
+                        gridHtml += `<div class="batch-card" onclick="openBatchChat('${batch}')">📚 Batch: ${batch}</div>`;
+                    });
+                }
+                document.getElementById('dynamicBatchGrid').innerHTML = gridHtml;
+            })
+            .catch(err => {
+                console.error("Batch load error:", err);
+                document.getElementById('dynamicBatchGrid').innerHTML = "<p style='color:#ef4444; text-align: center; font-size:13px;'>Failed to load batches.</p>";
+            });
+        }
+
+        function openBatchChat(batchName) {
+            activeChatBatch = batchName;
+            document.getElementById('batchSelectionView').style.display = 'none';
+            let chatRoom = document.getElementById('batchChatRoomView');
+            chatRoom.style.display = 'flex';
+            document.getElementById('currentBatchTitle').innerText = `Batch: ${batchName}`;
+            loadBatchMessagesAdmin();
+        }
+
+        function backToBatchList() {
+            document.getElementById('batchChatRoomView').style.display = 'none';
+            document.getElementById('batchSelectionView').style.display = 'block';
+            activeChatBatch = "";
+            fetchBatchesAndRender();
+        }
+
+        function loadBatchMessagesAdmin() {
+            if (!activeChatBatch) return;
+            fetch(`${CHAT_SCRIPT_URL}?action=getMessages&batch=${encodeURIComponent(activeChatBatch)}`)
+            .then(res => res.json())
+            .then(data => {
+                let chatBox = document.getElementById('adminChatMessages');
+                chatBox.innerHTML = "";
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    chatBox.innerHTML = "<p style='text-align:center; color:#6b7280; margin-top:20px; font-size:13px;'>No messages in this batch.</p>";
+                    return;
+                }
+
+                data.forEach(msg => {
+                    let imgHtml = "";
+                    if (msg.imageUrl) {
+                        let imgUrl = msg.imageUrl;
+                        if (imgUrl.includes("drive.google.com")) {
+                            let m = imgUrl.match(/\/d\/(.*?)\/|\?id=(.*?)(&|$)/);
+                            let id = m ? (m[1] || m[2]) : null;
+                            if (id) imgUrl = `https://lh3.googleusercontent.com/d/${id}`;
+                        }
+                        imgHtml = `<br><a href="${msg.imageUrl}" target="_blank"><img src="${imgUrl}" style="max-width:180px; border-radius:6px; border:1px solid #e5e7eb; margin-top:4px;"></a>`;
+                    }
+
+                    chatBox.innerHTML += `
+                        <div style="background: #ffffff; padding: 10px 12px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #e5e7eb; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                <b style="color:#007bff; font-size:13px;">${msg.name}</b>
+                                <span style="font-size: 10px; background: #e5e7eb; padding: 1px 5px; border-radius: 4px; color:#4b5563;">ID: ${msg.id}</span>
+                            </div>
+                            <p style="margin: 0; font-size: 13px; color: #1f2937; word-break: break-all;">${msg.message || ""}</p>
+                            ${imgHtml}
+                            <div style="font-size: 10px; color: #9ca3af; text-align: right; margin-top: 4px;">${msg.time}</div>
+                        </div>
+                    `;
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
+            })
+            .catch(err => {
+                console.error("Error loading chat:", err);
+                document.getElementById('adminChatMessages').innerHTML = "<p style='color:#ef4444; text-align:center; font-size:13px;'>Failed to load chat.</p>";
+            });
+        }
+
+        function handleTeacherChatImageSelect(input) {
+            if (input.files && input.files[0]) {
+                selectedChatImage = input.files[0];
+                document.getElementById('teacherChatImgName').innerText = selectedChatImage.name;
+            }
+        }
+
+        function sendTeacherChatMessage() {
+            let input = document.getElementById('teacherChatInput');
+            let msg = input.value.trim();
+            if (!msg && !selectedChatImage) return;
+            if (!activeChatBatch) return;
+
+            function postChatPayload(imageBytes = "", mimeType = "", fileName = "") {
+                let payload = {
+                    action: "sendMessage",
+                    id: "teacher_admin",
+                    name: "👨‍🏫 Teacher",
+                    batch: activeChatBatch,
+                    message: msg,
+                    imageBytes: imageBytes,
+                    mimeType: mimeType,
+                    fileName: fileName
+                };
+
+                fetch(CHAT_SCRIPT_URL, {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.status === "success") {
+                        input.value = "";
+                        selectedChatImage = null;
+                        document.getElementById('teacherChatImgName').innerText = "No image";
+                        document.getElementById('teacherChatImage').value = "";
+                        loadBatchMessagesAdmin();
+                    }
+                })
+                .catch(err => {
+                    console.error("Send error:", err);
+                    alert("Failed to send message!");
+                });
+            }
+
+            if (selectedChatImage) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let base64 = e.target.result.split(',')[1];
+                    postChatPayload(base64, selectedChatImage.type, selectedChatImage.name);
+                };
+                reader.readAsDataURL(selectedChatImage);
+            } else {
+                postChatPayload();
+            }
+        }
+
+        function handleTeacherChatKey(e) {
+            if (e.key === 'Enter') {
+                sendTeacherChatMessage();
+            }
+        }
+
+        function deleteChat(event, rowIndex) {
+            event.stopPropagation();
+            if(!confirm("Are you sure you want to delete this?")) return;
+
+            const payload = { action: "deleteQuestion", rowIndex: rowIndex };
+
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.text())
+            .then(() => {
+                loadAdminChats();
+            })
+            .catch(() => {
+                alert("An error occurred!");
+            });
+        }
+
+        function openDetail(rowIndex) {
+            selectedRowIndex = rowIndex;
+            const item = allQuestions.find(q => q.rowIndex === rowIndex);
+            if(!item) return;
+
+            document.getElementById('listView').style.display = 'none';
+            document.getElementById('adminTabsContainer').style.display = 'none';
+            document.getElementById('detailView').style.display = 'block';
+            document.getElementById('backBtn').style.display = 'inline-block';
+            document.getElementById('headerTitle').innerText = `Student: ${item.name}`;
+
+            let directImgUrl = item.imageUrl || "";
+            if (directImgUrl.includes("drive.google.com")) {
+                let fileIdMatch = directImgUrl.match(/\/d\/(.*?)\/|\?id=(.*?)(&|$)/);
+                let fileId = fileIdMatch ? (fileIdMatch[1] || fileIdMatch[2]) : null;
+                if (fileId) directImgUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
+            }
+
+            let detailHtml = `
+                <div class="message-card">
+                    <div style="border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 8px;">
+                        <span style="font-size: 12px; color: #6b7280; font-weight: 600;">ID: ${item.id} | Subject: ${item.subject}</span>
+                    </div>
+                    <p style="margin: 0 0 4px 0; font-weight: 600; color: #1f2937;">Question:</p>
+                    <div style="background: #ffffff; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; white-space: pre-wrap; font-size: 13px;">${item.question}</div>
+                    ${directImgUrl ? `<p style="margin-top:10px; font-weight: 600; color: #1f2937;">Attached Image:</p><a href="${item.imageUrl}" target="_blank"><img src="${directImgUrl}" alt="Image"></a>` : ''}
+                </div>
+            `;
+
+            if(item.answer) {
+                detailHtml += `
+                    <div class="message-card teacher">
+                        <p style="margin: 0 0 4px 0; font-weight: 600; color: #059669;">Previous Answer:</p>
+                        <div style="white-space: pre-wrap; font-size: 13px; color: #047857;">${item.answer.replace(/\n/g, '<br>')}</div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('detailContent').innerHTML = detailHtml;
+            document.getElementById('teacherAnswer').value = "";
+            teacherFile = null;
+            document.getElementById('imgName').innerText = "";
+        }
+
+        function goBackToList() {
+            document.getElementById('detailView').style.display = 'none';
+            document.getElementById('listView').style.display = 'block';
+            document.getElementById('adminTabsContainer').style.display = 'flex';
+            document.getElementById('backBtn').style.display = 'none';
+            document.getElementById('headerTitle').innerText = "Teacher Admin Panel";
+            loadAdminChats();
+        }
+
+        function previewImage(input) {
+            if(input.files && input.files[0]) {
+                teacherFile = input.files[0];
+                document.getElementById('imgName').innerText = teacherFile.name;
+            }
+        }
+
+        function sendAnswer() {
+            const answerText = document.getElementById('teacherAnswer').value.trim();
+            if(!answerText && !teacherFile) {
+                alert("Please provide an answer or an image");
+                return;
+            }
+
+            if(teacherFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    let base64Data = e.target.result.split(',')[1];
+                    postAnswerData(answerText, base64Data, teacherFile.type, teacherFile.name);
+                };
+                reader.readAsDataURL(teacherFile);
+            } else {
+                postAnswerData(answerText, "", "", "");
+            }
+        }
+
+        function postAnswerData(answer, imageBytes, mimeType, fileName) {
+            const payload = {
+                action: "saveAnswer",
+                rowIndex: selectedRowIndex,
+                answer: answer,
+                imageBytes: imageBytes,
+                mimeType: mimeType,
+                fileName: fileName
+            };
+
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.text())
+            .then(() => {
+                goBackToList();
+            })
+            .catch(() => {
+                alert("An error occurred!");
+            });
+        }
+
+        function openNoticeModal() { document.getElementById('noticeModal').style.display = 'flex'; }
+        function closeNoticeModal() { document.getElementById('noticeModal').style.display = 'none'; }
+        
+        function postNewNotice() {
+            const noticeText = document.getElementById('adminNoticeInput').value.trim();
+            if(!noticeText) { alert("Please write something for the notice!"); return; }
+
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({ action: "updateNotice", notice: noticeText })
+            })
+            .then(res => res.text())
+            .then(() => {
+                alert("Notice updated successfully!");
+                document.getElementById('adminNoticeInput').value = "";
+                closeNoticeModal();
+            })
+            .catch(err => alert("Error: " + err));
+        }
+    </script>
+</body>
+</html>
